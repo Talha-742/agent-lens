@@ -349,7 +349,7 @@ Contributions are welcome! Here's how to get started:
 
 ```bash
 # Fork the repo, then:
-git clone https://github.com/yourusername/agentlens.git
+git clone https://github.com/Talha-742/agent-lens.git
 cd agentlens
 uv venv && source .venv/bin/activate
 uv pip install -r requirements.txt
