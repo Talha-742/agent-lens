@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentLens - AI-Powered LLM Discovery</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════
+           ROOT VARIABLES & GLOBAL STYLES
+           ═══════════════════════════════════════════════════════════════════ */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-teal: #0f766e;
+            --accent-teal-light: #14b8a6;
+            --accent-teal-dark: #0d5f58;
+            --success: #22c55e;
+            --success-light: #4ade80;
+            --warning: #f59e0b;
+            --warning-light: #fbbf24;
+            --danger: #ef4444;
+            --danger-light: #f87171;
+            --lime: #84cc16;
+            --blue: #3b82f6;
+            --indigo: #6366f1;
+            --border-color: #475569;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+            --transition-slow: 400ms ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-color);
+        }
+
+        /* Selection color */
+        ::selection {
+            background-color: var(--accent-teal);
+            color: var(--text-primary);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           HERO HEADER
+           ═══════════════════════════════════════════════════════════════════ */
+        .hero-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, var(--accent-teal) 100%);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.85);
+            margin-top: 0.5rem;
+            font-weight: 400;
+        }
+
+        /* Status bar */
+        .status-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.success {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-dot.error {
+            background-color: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           QUERY INPUT SECTION
+           ═══════════════════════════════════════════════════════════════════ */
+        .query-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .query-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .query-textarea {
+            width: 100%;
+            min-height: 140px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+            font-family: inherit;
+        }
+
+        .query-textarea:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.2);
+        }
+
+        .query-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .example-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            text-align: left;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 0.75rem;
+        }
+
+        .example-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-teal);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .example-btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%);
+            border: none;
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-md);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .search-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, var(--accent-teal-light) 0%, var(--accent-teal) 100%);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-btn i {
+            font-size: 1.2rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           LOADING STATE
+           ═══════════════════════════════════════════════════════════════════ */
+        .loading-container {
+            text-align: center;
+            padding: 4rem 2rem;
+            display: none;
+        }
+
+        .loading-container.active {
+            display: block;
+        }
+
+        .spinner-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+        }
+
+        .spinner-ring {
+            width: 100%;
+            height: 100%;
+            border: 4px solid var(--bg-tertiary);
+            border-top-color: var(--accent-teal);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-light) 100%);
+            border-radius: 50%;
+            animation: pulse-inner 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-inner {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(0.85); }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtext {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           SECTION TITLES
+           ═══════════════════════════════════════════════════════════════════ */
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 2.5rem 0 1.25rem;
+            padding-left: 1rem;
+            border-left: 4px solid var(--accent-teal);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--accent-teal-light);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           WORKFLOW ANALYSIS PANEL
+           ═══════════════════════════════════════════════════════════════════ */
+        .workflow-panel {
+            background: var(--bg-secondary);
+            border-radius: 14px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .workflow-analysis {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .requirements-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .req-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.9rem;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--blue);
+        }
+
+        .req-badge i {
+            font-size: 0.75rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           MODEL CARDS
+           ═══════════════════════════════════════════════════════════════════ */
+        .model-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-teal), var(--accent-teal-light));
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+        }
+
+        .model-card:hover {
+            border-color: var(--accent-teal);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .model-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .model-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .model-rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%);
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .model-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .model-provider {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .model-provider span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .model-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .model-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem;
+        }
+
+        .model-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .model-features li i {
+            color: var(--accent-teal-light);
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        /* Badges */
+        .badges-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .badge-custom {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .badge-cost-free { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-cost-low { background: rgba(132, 204, 22, 0.15); color: var(--lime); border: 1px solid rgba(132, 204, 22, 0.3); }
+        .badge-cost-medium { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-cost-high { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-cost-unknown { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); border: 1px solid rgba(148, 163, 184, 0.3); }
+
+        .badge-tool-yes { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-tool-partial { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-tool-no { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .badge-context { background: rgba(59, 130, 246, 0.15); color: var(--blue); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-type { background: rgba(99, 102, 241, 0.15); color: var(--indigo); border: 1px solid rgba(99, 102, 241, 0.3); }
+
+        /* Suitability Score Ring */
+        .score-ring-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .score-ring {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+        }
+
+        .score-ring svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .score-ring circle {
+            fill: none;
+            stroke-width: 6;
+        }
+
+        .score-ring .bg {
+            stroke: var(--bg-tertiary);
+        }
+
+        .score-ring .progress {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .score-ring .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           TABS
+           ═══════════════════════════════════════════════════════════════════ */
+        .nav-tabs {
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            gap: 0.5rem;
+        }
+
+        .nav-tabs .nav-link {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px 10px 0 0;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            transition: all var(--transition-normal);
+            margin-bottom: -2px;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border-color: var(--accent-teal);
+            color: var(--text-primary);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%);
+            border-color: var(--accent-teal);
+            color: white;
+        }
+
+        .tab-content {
+            background: transparent;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           COMPARISON TABLE
+           ═══════════════════════════════════════════════════════════════════ */
+        .comparison-table-wrapper {
+            background: var(--bg-secondary);
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .table {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .table thead th {
+            background: var(--bg-primary);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .table tbody tr {
+            transition: background var(--transition-fast);
+        }
+
+        .table tbody tr:hover {
+            background: var(--bg-primary);
+        }
+
+        .table-rank {
+            font-weight: 700;
+            color: var(--accent-teal-light);
+        }
+
+        .table-model {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .suitability-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .suitability-bar .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .suitability-score-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           LOCAL MODELS SECTION
+           ═══════════════════════════════════════════════════════════════════ */
+        .local-models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .local-model-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            transition: all var(--transition-normal);
+        }
+
+        .local-model-card:hover {
+            border-color: var(--accent-teal);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .local-model-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .local-model-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--indigo) 0%, #4f46e5 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .local-model-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            margin: 0;
+        }
+
+        .local-model-details {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .local-model-details strong {
+            color: var(--text-primary);
+        }
+
+        .workflow-fit-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+        }
+
+        /* Test Console */
+        .test-console {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .test-console-input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            margin-bottom: 0.75rem;
+            resize: none;
+        }
+
+        .test-console-input:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+        }
+
+        .test-console-btn {
+            background: var(--accent-teal);
+            border: none;
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .test-console-btn:hover {
+            background: var(--accent-teal-light);
+        }
+
+        .test-console-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .test-console-response {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           OFFCANVAS SIDEBAR
+           ═══════════════════════════════════════════════════════════════════ */
+        .offcanvas {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+        }
+
+        .offcanvas-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .offcanvas-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .offcanvas-body {
+            padding: 1.5rem;
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+        }
+
+        .status-indicator:last-child {
+            margin-bottom: 0;
+        }
+
+        .search-history-item {
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
+        }
+
+        .search-history-item:hover {
+            border-color: var(--accent-teal);
+            background: var(--bg-primary);
+        }
+
+        .search-history-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .accordion-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+            border-radius: 10px !important;
+            overflow: hidden;
+        }
+
+        .accordion-button {
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: 500;
+            padding: 1rem;
+            border: none;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background: var(--accent-teal);
+            color: white;
+            box-shadow: none;
+        }
+
+        .accordion-button:focus {
+            box-shadow: none;
+            border-color: transparent;
+        }
+
+        .accordion-body {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           EMPTY STATES
+           ═══════════════════════════════════════════════════════════════════ */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--bg-tertiary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           UTILITIES
+           ═══════════════════════════════════════════════════════════════════ */
+        .text-gradient {
+            background: linear-gradient(135deg, var(--accent-teal-light) 0%, var(--accent-teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-outline-teal {
+            background: transparent;
+            border: 2px solid var(--accent-teal);
+            color: var(--accent-teal);
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .btn-outline-teal:hover {
+            background: var(--accent-teal);
+            color: white;
+        }
+
+        .collapse-icon {
+            transition: transform var(--transition-normal);
+        }
+
+        .collapse-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 1.75rem;
+            }
+
+            .hero-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .model-card-header {
+                flex-direction: column;
+            }
+
+            .score-ring-wrapper {
+                flex-direction: row;
+                justify-content: flex-end;
+            }
+
+            .local-models-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-responsive {
+                border-radius: 14px;
+            }
+
+            .nav-tabs .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- ════════════════════════════════════════════════════════════════
+             HERO HEADER
+             ════════════════════════════════════════════════════════════════ -->
+        <header class="hero-header">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="hero-title">
+                        <i class="bi bi-search me-2"></i>AgentLens
+                    </h1>
+                    <p class="hero-subtitle">
+                        AI-Powered LLM Discovery for Agentic Workflows — powered by Ollama + DuckDuckGo Search
+                    </p>
+
+                    <div class="status-bar">
+                        <div class="status-pill">
+                            <span class="status-dot" id="ollama-dot"></span>
+                            <span id="ollama-status-text">Checking Ollama...</span>
+                        </div>
+                        <div class="status-pill">
+                            <span class="status-dot" id="client-dot"></span>
+                            <span id="client-status-text">Checking API...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <button class="btn btn-outline-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                        <i class="bi bi-sliders me-2"></i>Settings & History
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             QUERY INPUT SECTION
+             ════════════════════════════════════════════════════════════════ -->
+        <section class="query-section">
+            <div class="row">
+                <div class="col-lg-9">
+                    <label class="query-label">
+                        <i class="bi bi-pencil-square"></i>
+                        Describe your agentic AI workflow
+                    </label>
+                    <textarea
+                        id="query-input"
+                        class="query-textarea"
+                        placeholder="I'm building a marketing automation agent that handles campaign creation, audience targeting, A/B test analysis, and report generation..."
+                    ></textarea>
+                </div>
+                <div class="col-lg-3">
+                    <label class="query-label">
+                        <i class="bi bi-lightbulb"></i>
+                        Example queries
+                    </label>
+                    <button class="example-btn" onclick="setExampleQuery(0)">
+                        <i class="bi bi-megaphone me-2"></i>Marketing automation agent...
+                    </button>
+                    <button class="example-btn" onclick="setExampleQuery(1)">
+                        <i class="bi bi-headset me-2"></i>Customer support workflow...
+                    </button>
+                    <button class="example-btn" onclick="setExampleQuery(2)">
+                        <i class="bi bi-code-slash me-2"></i>Coding agent with tool calling...
+                    </button>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button id="search-btn" class="search-btn" onclick="searchLLMs()">
+                    <i class="bi bi-search"></i>
+                    <span>Search LLMs</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             LOADING STATE
+             ════════════════════════════════════════════════════════════════ -->
+        <div id="loading-container" class="loading-container">
+            <div class="spinner-wrapper">
+                <div class="spinner-ring"></div>
+                <div class="spinner-inner"></div>
+            </div>
+            <div class="loading-text" id="loading-text">Searching the web...</div>
+            <div class="loading-subtext">This may take a moment while we analyze the latest LLM data</div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             RESULTS CONTAINER
+             ════════════════════════════════════════════════════════════════ -->
+        <div id="results-container" style="display: none;">
+
+            <!-- Workflow Analysis -->
+            <h2 class="section-title">
+                <i class="bi bi-brain"></i>
+                Workflow Analysis
+            </h2>
+            <div class="workflow-panel">
+                <p class="workflow-analysis" id="workflow-analysis-text"></p>
+                <div class="requirements-list" id="requirements-list"></div>
+            </div>
+
+            <!-- Model Recommendations -->
+            <h2 class="section-title">
+                <i class="bi bi-stars"></i>
+                LLM Recommendations
+            </h2>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#tab-all">
+                        <i class="bi bi-globe me-2"></i>All <span id="count-all">(0)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#tab-cloud">
+                        <i class="bi bi-cloud me-2"></i>Cloud <span id="count-cloud">(0)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#tab-oss">
+                        <i class="bi bi-pc-display me-2"></i>Open-Source <span id="count-oss">(0)</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="tab-all">
+                    <div id="recs-all"></div>
+                </div>
+                <div class="tab-pane fade" id="tab-cloud">
+                    <div id="recs-cloud"></div>
+                </div>
+                <div class="tab-pane fade" id="tab-oss">
+                    <div id="recs-oss"></div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <h2 class="section-title">
+                <i class="bi bi-table"></i>
+                Comparison Table
+            </h2>
+            <div class="comparison-table-wrapper">
+                <div class="table-responsive">
+                    <table class="table" id="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Model</th>
+                                <th>Provider</th>
+                                <th>Parameters</th>
+                                <th>Tool Support</th>
+                                <th>Cost Tier</th>
+                                <th>Context Window</th>
+                                <th style="width: 200px;">Suitability Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparison-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Local Ollama Models -->
+            <h2 class="section-title">
+                <i class="bi bi-hdd-stack"></i>
+                Local Ollama Models
+            </h2>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted" id="local-models-count">0 model(s) installed locally</span>
+                <button class="btn-outline-teal" onclick="loadLocalModels()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+            </div>
+            <div id="local-models-container" class="local-models-grid"></div>
+        </div>
+
+        <!-- Empty State (no results yet) -->
+        <div id="empty-state" class="empty-state">
+            <i class="bi bi-search"></i>
+            <h3 class="empty-state-title">Ready to discover your perfect LLM</h3>
+            <p class="empty-state-text">Describe your agentic AI workflow above and click "Search LLMs" to get personalized recommendations</p>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         OFFCANVAS SIDEBAR
+         ════════════════════════════════════════════════════════════════ -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="sidebarOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">
+                <i class="bi bi-sliders me-2"></i>Settings & History
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <!-- System Status -->
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">System Status</h6>
+                <div class="status-indicator">
+                    <span class="status-dot" id="sidebar-ollama-dot"></span>
+                    <div>
+                        <div class="fw-semibold" id="sidebar-ollama-text">Ollama</div>
+                        <small class="text-muted" id="sidebar-ollama-detail">Checking...</small>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-dot" id="sidebar-client-dot"></span>
+                    <div>
+                        <div class="fw-semibold" id="sidebar-client-text">API Client</div>
+                        <small class="text-muted" id="sidebar-client-detail">Checking...</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search History -->
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">Search History</h6>
+                <div id="search-history-list">
+                    <p class="text-muted small">No searches yet</p>
+                </div>
+                <button class="btn-outline-teal mt-2 w-100" onclick="clearSearchHistory()" style="font-size: 0.8rem;">
+                    <i class="bi bi-trash me-2"></i>Clear History
+                </button>
+            </div>
+
+            <!-- How It Works -->
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">How It Works</h6>
+                <div class="accordion" id="howItWorksAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#step1">
+                                1. Describe Your Workflow
+                            </button>
+                        </h2>
+                        <div id="step1" class="accordion-collapse collapse show" data-bs-parent="#howItWorksAccordion">
+                            <div class="accordion-body">
+                                Start by describing your agentic AI workflow in plain language. Be specific about tasks, tools, data types, and requirements.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step2">
+                                2. Web Search
+                            </button>
+                        </h2>
+                        <div id="step2" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                            <div class="accordion-body">
+                                AgentLens searches the web using DuckDuckGo to find up-to-date information about LLM models relevant to your workflow.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step3">
+                                3. AI Analysis
+                            </button>
+                        </h2>
+                        <div id="step3" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                            <div class="accordion-body">
+                                Qwen3 (via Ollama) analyzes the search results and produces structured recommendations tailored to your needs.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step4">
+                                4. Review & Compare
+                            </button>
+                        </h2>
+                        <div id="step4" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                            <div class="accordion-body">
+                                Review detailed model cards, filter by type, and compare models side-by-side in the comparison table.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ════════════════════════════════════════════════════════════════════
+        // CONSTANTS & STATE
+        // ════════════════════════════════════════════════════════════════════
+        const EXAMPLE_QUERIES = [
+            "I'm building a marketing automation agent that handles campaign creation, audience targeting, A/B test analysis, and report generation.",
+            "I need an LLM for a customer support agentic workflow with tool calling, RAG, and multi-turn memory.",
+            "Which LLMs support tool calling for a coding agent that writes, tests, and deploys code?",
+            "Best models for a financial analysis agent that reads PDFs, runs calculations, and generates reports."
+        ];
+
+        const LOADING_MESSAGES = [
+            "Searching the web...",
+            "Reasoning with Qwen3...",
+            "Structuring results...",
+            "Analyzing models...",
+            "Finalizing recommendations..."
+        ];
+
+        let currentResult = null;
+        let localModelsData = [];
+
+        // ════════════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ════════════════════════════════════════════════════════════════════
+
+        function getCostBadgeClass(costTier) {
+            const tiers = {
+                'Free': 'badge-cost-free',
+                'Low': 'badge-cost-low',
+                'Medium': 'badge-cost-medium',
+                'High': 'badge-cost-high'
+            };
+            return tiers[costTier] || 'badge-cost-unknown';
+        }
+
+        function getToolBadgeClass(toolSupport) {
+            const supports = {
+                'Yes': 'badge-tool-yes',
+                'Partial': 'badge-tool-partial',
+                'No': 'badge-tool-no'
+            };
+            return supports[toolSupport] || 'badge-tool-no';
+        }
+
+        function getScoreColor(score) {
+            if (score >= 8.5) return '#22c55e';
+            if (score >= 6.5) return '#f59e0b';
+            return '#ef4444';
+        }
+
+        function getScoreColorClass(score) {
+            if (score >= 8.5) return 'success';
+            if (score >= 6.5) return 'warning';
+            return 'danger';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // STATUS CHECK
+        // ════════════════════════════════════════════════════════════════════
+
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                // Update header status
+                updateStatusUI('ollama-dot', 'ollama-status-text', data.ollama);
+                updateStatusUI('client-dot', 'client-status-text', data.client);
+
+                // Update sidebar status
+                updateStatusUI('sidebar-ollama-dot', 'sidebar-ollama-text', data.ollama, 'sidebar-ollama-detail');
+                updateStatusUI('sidebar-client-dot', 'sidebar-client-text', data.client, 'sidebar-client-detail');
+
+            } catch (error) {
+                console.error('Status check failed:', error);
+                updateStatusUI('ollama-dot', 'ollama-status-text', { connected: false, message: 'Cannot reach server' });
+                updateStatusUI('client-dot', 'client-status-text', { connected: false, message: 'Connection error' });
+            }
+        }
+
+        function updateStatusUI(dotId, textId, status, detailId = null) {
+            const dot = document.getElementById(dotId);
+            const text = document.getElementById(textId);
+
+            const isConnected = status.connected || status.running;
+
+            dot.className = 'status-dot ' + (isConnected ? 'success' : 'error');
+            text.textContent = status.message || (isConnected ? 'Connected' : 'Disconnected');
+
+            if (detailId) {
+                const detail = document.getElementById(detailId);
+                if (detail) {
+                    detail.textContent = status.model_count !== undefined
+                        ? `${status.model_count} model(s)`
+                        : (status.models ? `${status.models.length} models` : '');
+                }
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // QUERY INPUT
+        // ════════════════════════════════════════════════════════════════════
+
+        function setExampleQuery(index) {
+            document.getElementById('query-input').value = EXAMPLE_QUERIES[index];
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // SEARCH FUNCTION
+        // ════════════════════════════════════════════════════════════════════
+
+        async function searchLLMs() {
+            const queryInput = document.getElementById('query-input');
+            const query = queryInput.value.trim();
+
+            if (!query) {
+                queryInput.focus();
+                queryInput.style.borderColor = '#ef4444';
+                setTimeout(() => queryInput.style.borderColor = '', 2000);
+                return;
+            }
+
+            // Save to history
+            addToSearchHistory(query);
+
+            // UI state: loading
+            const searchBtn = document.getElementById('search-btn');
+            const loadingContainer = document.getElementById('loading-container');
+            const resultsContainer = document.getElementById('results-container');
+            const emptyState = document.getElementById('empty-state');
+
+            searchBtn.disabled = true;
+            loadingContainer.classList.add('active');
+            resultsContainer.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            // Rotate loading messages
+            let msgIndex = 0;
+            const loadingText = document.getElementById('loading-text');
+            const msgInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
+                loadingText.textContent = LOADING_MESSAGES[msgIndex];
+            }, 2000);
+
+            try {
+                const response = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                const result = await response.json();
+                clearInterval(msgInterval);
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                currentResult = result;
+                renderResults(result);
+
+                loadingContainer.classList.remove('active');
+                resultsContainer.style.display = 'block';
+
+            } catch (error) {
+                clearInterval(msgInterval);
+                loadingContainer.classList.remove('active');
+                alert('Error: ' + error.message);
+            } finally {
+                searchBtn.disabled = false;
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // RENDER RESULTS
+        // ════════════════════════════════════════════════════════════════════
+
+        function renderResults(result) {
+            // Workflow Analysis
+            document.getElementById('workflow-analysis-text').textContent =
+                result.workflow_analysis || 'No analysis available.';
+
+            const reqList = document.getElementById('requirements-list');
+            reqList.innerHTML = '';
+            if (result.key_requirements && result.key_requirements.length > 0) {
+                result.key_requirements.forEach(req => {
+                    const badge = document.createElement('span');
+                    badge.className = 'req-badge';
+                    badge.innerHTML = `<i class="bi bi-check-circle-fill"></i>${escapeHtml(req)}`;
+                    reqList.appendChild(badge);
+                });
+            }
+
+            // Recommendations
+            const recs = result.recommendations || [];
+            const cloudRecs = recs.filter(r => r.model_type === 'Cloud' || r.model_type === 'Both');
+            const ossRecs = recs.filter(r => r.model_type === 'Local');
+
+            // Update counts
+            document.getElementById('count-all').textContent = `(${recs.length})`;
+            document.getElementById('count-cloud').textContent = `(${cloudRecs.length})`;
+            document.getElementById('count-oss').textContent = `(${ossRecs.length})`;
+
+            // Render cards
+            document.getElementById('recs-all').innerHTML = recs.map(r => createModelCard(r)).join('');
+            document.getElementById('recs-cloud').innerHTML = cloudRecs.length > 0
+                ? cloudRecs.map(r => createModelCard(r)).join('')
+                : '<div class="empty-state"><p class="text-muted">No cloud-specific models in this result set.</p></div>';
+            document.getElementById('recs-oss').innerHTML = ossRecs.length > 0
+                ? ossRecs.map(r => createModelCard(r)).join('')
+                : '<div class="empty-state"><p class="text-muted">No open-source-specific models in this result set.</p></div>';
+
+            // Comparison table
+            renderComparisonTable(recs);
+
+            // Load local models
+            loadLocalModels();
+        }
+
+        function createModelCard(rec) {
+            const score = parseFloat(rec.suitability_score) || 5;
+            const scoreColor = getScoreColor(score);
+            const circumference = 2 * Math.PI * 26;
+            const offset = circumference - (score / 10) * circumference;
+
+            const toolClass = getToolBadgeClass(rec.tool_calling_support || 'No');
+            const costClass = getCostBadgeClass(rec.cost_tier || 'Unknown');
+
+            const features = (rec.key_features || []).map(f =>
+                `<li><i class="bi bi-check2"></i>${escapeHtml(f)}</li>`
+            ).join('');
+
+            return `
+                <div class="model-card">
+                    <div class="model-card-header">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="model-rank">${rec.rank || '?'}</span>
+                                <div>
+                                    <h3 class="model-name">${escapeHtml(rec.model_name || 'Unknown Model')}</h3>
+                                    <div class="model-provider">
+                                        <span><i class="bi bi-building"></i>${escapeHtml(rec.provider || 'Unknown')}</span>
+                                        <span><i class="bi bi-rulers"></i>${escapeHtml(rec.parameters || 'Unknown')}</span>
+                                        <span><i class="bi bi-pc-display"></i>${escapeHtml(rec.model_type || 'Unknown')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="score-ring-wrapper">
+                            <div class="score-ring">
+                                <svg viewBox="0 0 64 64">
+                                    <circle class="bg" cx="32" cy="32" r="26"></circle>
+                                    <circle class="progress" cx="32" cy="32" r="26"
+                                        stroke="${scoreColor}"
+                                        stroke-dasharray="${circumference}"
+                                        stroke-dashoffset="${offset}"></circle>
+                                </svg>
+                                <span class="score-value">${score.toFixed(1)}</span>
+                            </div>
+                            <span class="score-label">/ 10</span>
+                        </div>
+                    </div>
+
+                    <p class="model-description">${escapeHtml(rec.description || 'No description available.')}</p>
+
+                    ${features ? `<ul class="model-features">${features}</ul>` : ''}
+
+                    <div class="badges-row">
+                        <span class="badge-custom ${costClass}">
+                            <i class="bi bi-currency-dollar"></i>${escapeHtml(rec.cost_tier || 'Unknown')}
+                        </span>
+                        <span class="badge-custom ${toolClass}">
+                            <i class="bi bi-wrench"></i>Tools: ${escapeHtml(rec.tool_calling_support || 'Unknown')}
+                        </span>
+                        <span class="badge-custom badge-context">
+                            <i class="bi bi-window"></i>${escapeHtml(rec.context_window || 'Unknown')}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderComparisonTable(recs) {
+            const tbody = document.getElementById('comparison-table-body');
+            tbody.innerHTML = '';
+
+            recs.forEach(rec => {
+                const score = parseFloat(rec.suitability_score) || 5;
+                const scoreColor = getScoreColor(score);
+                const toolClass = getToolBadgeClass(rec.tool_calling_support || 'No');
+                const costClass = getCostBadgeClass(rec.cost_tier || 'Unknown');
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="table-rank">#${rec.rank || '?'}</td>
+                    <td class="table-model">${escapeHtml(rec.model_name || 'Unknown')}</td>
+                    <td>${escapeHtml(rec.provider || 'Unknown')}</td>
+                    <td>${escapeHtml(rec.parameters || 'Unknown')}</td>
+                    <td><span class="badge-custom ${toolClass}">${escapeHtml(rec.tool_calling_support || 'Unknown')}</span></td>
+                    <td><span class="badge-custom ${costClass}">${escapeHtml(rec.cost_tier || 'Unknown')}</span></td>
+                    <td>${escapeHtml(rec.context_window || 'Unknown')}</td>
+                    <td>
+                        <div class="suitability-bar">
+                            <div class="progress-fill" style="width: ${(score / 10) * 100}%; background: ${scoreColor};"></div>
+                        </div>
+                        <div class="suitability-score-text" style="color: ${scoreColor};">${score.toFixed(1)} / 10</div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // LOCAL MODELS
+        // ════════════════════════════════════════════════════════════════════
+
+        async function loadLocalModels() {
+            try {
+                const response = await fetch('/api/local-models');
+                localModelsData = await response.json();
+
+                document.getElementById('local-models-count').textContent =
+                    `${localModelsData.length} model(s) installed locally`;
+
+                const container = document.getElementById('local-models-container');
+
+                if (localModelsData.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <i class="bi bi-hdd-stack"></i>
+                            <h3 class="empty-state-title">No local models found</h3>
+                            <p class="empty-state-text">Make sure Ollama is running and you have pulled at least one model</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Get workflow keywords for scoring
+                const lastQuery = sessionStorage.getItem('lastQuery') || '';
+                const keywords = lastQuery.toLowerCase().split(' ').filter(w => w.length > 3);
+
+                container.innerHTML = localModelsData.map(model => {
+                    const fitScore = calculateWorkflowFit(model, keywords);
+                    const scoreColor = getScoreColor(fitScore);
+                    const collapsedId = `collapse-${model.name.replace(/[^a-z0-9]/gi, '-')}`;
+                    const testInputId = `test-input-${model.name.replace(/[^a-z0-9]/gi, '-')}`;
+                    const testBtnId = `test-btn-${model.name.replace(/[^a-z0-9]/gi, '-')}`;
+                    const responseId = `test-response-${model.name.replace(/[^a-z0-9]/gi, '-')}`;
+
+                    return `
+                        <div class="local-model-card">
+                            <div class="local-model-header">
+                                <div class="local-model-icon">
+                                    <i class="bi bi-cpu"></i>
+                                </div>
+                                <div>
+                                    <h4 class="local-model-name">${escapeHtml(model.name)}</h4>
+                                    <small class="text-muted">Family: ${escapeHtml(model.family)}</small>
+                                </div>
+                            </div>
+                            <div class="local-model-details">
+                                <div>Parameters: <strong>${escapeHtml(model.parameters)}</strong></div>
+                                <div>Quantization: <strong>${escapeHtml(model.quantization)}</strong></div>
+                                <div>Size: <strong>${model.size_gb} GB</strong> | Format: ${escapeHtml(model.format || 'unknown')}</div>
+                                <div>Modified: ${escapeHtml(model.modified || 'unknown')}</div>
+                            </div>
+                            <div class="workflow-fit-badge" style="background: rgba(${parseInt(scoreColor.slice(1,3), 16)}, ${parseInt(scoreColor.slice(3,5), 16)}, ${parseInt(scoreColor.slice(5,7), 16)}, 0.15); color: ${scoreColor}; border: 1px solid ${scoreColor}80;">
+                                <i class="bi bi-target"></i>Workflow Fit: ${fitScore}/10
+                            </div>
+
+                            <div class="test-console">
+                                <button class="test-console-btn w-100" type="button" data-bs-toggle="collapse" data-bs-target="#${collapsedId}" onclick="toggleCollapseIcon(this)">
+                                    <i class="bi bi-terminal me-2"></i>Test Console
+                                    <i class="bi bi-chevron-down ms-2 collapse-icon"></i>
+                                </button>
+                                <div class="collapse mt-2" id="${collapsedId}">
+                                    <textarea class="test-console-input" id="${testInputId}" rows="2" placeholder="Enter a test prompt...">Briefly introduce yourself and your capabilities.</textarea>
+                                    <button class="test-console-btn" id="${testBtnId}" onclick="testModel('${escapeHtml(model.name)}', '${testInputId}', '${responseId}')">
+                                        <i class="bi bi-play-fill"></i>Run
+                                    </button>
+                                    <div class="test-console-response" id="${responseId}" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Failed to load local models:', error);
+                document.getElementById('local-models-container').innerHTML =
+                    '<div class="empty-state"><p class="text-danger">Failed to load local models</p></div>';
+            }
+        }
+
+        function calculateWorkflowFit(model, keywords) {
+            if (!keywords || keywords.length === 0) return 5.0;
+
+            let score = 5.0;
+            const nameLower = (model.name + model.family).toLowerCase();
+
+            const keywordMap = {
+                'code': ['code', 'coder', 'starcoder', 'deepseek', 'codellama'],
+                'reasoning': ['qwen', 'deepseek', 'llama', 'mistral', 'phi'],
+                'math': ['math', 'qwen', 'deepseek'],
+                'vision': ['vision', 'llava', 'bakllava', 'minicpm'],
+                'chat': ['chat', 'instruct', 'llama', 'mistral', 'qwen', 'gemma'],
+                'tool': ['qwen', 'llama', 'mistral', 'hermes', 'functionary'],
+            };
+
+            keywords.forEach(kw => {
+                for (const [category, tags] of Object.entries(keywordMap)) {
+                    if (kw.includes(category) || tags.some(t => nameLower.includes(t))) {
+                        score = Math.min(10, score + 0.5);
+                    }
+                }
+            });
+
+            // Bonus for larger models
+            const params = model.parameters.toLowerCase();
+            if (['70b', '72b', '34b', '32b'].some(p => params.includes(p))) {
+                score = Math.min(10, score + 1.5);
+            } else if (['13b', '14b', '8b', '7b'].some(p => params.includes(p))) {
+                score = Math.min(10, score + 0.5);
+            }
+
+            return Math.round(score * 10) / 10;
+        }
+
+        function toggleCollapseIcon(btn) {
+            const icon = btn.querySelector('.collapse-icon');
+            setTimeout(() => {
+                const target = btn.getAttribute('data-bs-target');
+                const el = document.querySelector(target);
+                if (el && !el.classList.contains('show')) {
+                    icon.classList.add('rotated');
+                } else {
+                    icon.classList.remove('rotated');
+                }
+            }, 50);
+        }
+
+        async function testModel(modelName, inputId, responseId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(inputId.replace('input', 'btn'));
+            const responseEl = document.getElementById(responseId);
+            const prompt = input.value.trim();
+
+            if (!prompt) {
+                input.focus();
+                input.style.borderColor = '#ef4444';
+                setTimeout(() => input.style.borderColor = '', 2000);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i>Running...';
+            responseEl.style.display = 'block';
+            responseEl.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating response...';
+
+            try {
+                const response = await fetch('/api/test-model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: modelName, prompt })
+                });
+
+                const result = await response.json();
+                responseEl.innerHTML = escapeHtml(result.response || 'No response received');
+
+            } catch (error) {
+                responseEl.innerHTML = `<span class="text-danger">Error: ${error.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-play-fill"></i>Run';
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // SEARCH HISTORY
+        // ════════════════════════════════════════════════════════════════════
+
+        function addToSearchHistory(query) {
+            let history = JSON.parse(sessionStorage.getItem('searchHistory') || '[]');
+
+            // Remove if already exists (to move to top)
+            history = history.filter(q => q !== query);
+
+            // Add to beginning
+            history.unshift(query);
+
+            // Keep last 10
+            history = history.slice(0, 10);
+
+            sessionStorage.setItem('searchHistory', JSON.stringify(history));
+            sessionStorage.setItem('lastQuery', query);
+
+            renderSearchHistory();
+        }
+
+        function renderSearchHistory() {
+            const history = JSON.parse(sessionStorage.getItem('searchHistory') || '[]');
+            const container = document.getElementById('search-history-list');
+
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-muted small">No searches yet</p>';
+                return;
+            }
+
+            container.innerHTML = history.map((q, i) => `
+                <div class="search-history-item" onclick="loadHistoryQuery(${i})">
+                    <i class="bi bi-clock-history me-2"></i>
+                    ${escapeHtml(q.length > 50 ? q.substring(0, 50) + '...' : q)}
+                </div>
+            `).join('');
+        }
+
+        function loadHistoryQuery(index) {
+            const history = JSON.parse(sessionStorage.getItem('searchHistory') || '[]');
+            if (history[index]) {
+                document.getElementById('query-input').value = history[index];
+                // Close offcanvas on mobile
+                const offcanvas = document.getElementById('sidebarOffcanvas');
+                const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvas);
+                if (bsOffcanvas) bsOffcanvas.hide();
+            }
+        }
+
+        function clearSearchHistory() {
+            sessionStorage.removeItem('searchHistory');
+            sessionStorage.removeItem('lastQuery');
+            renderSearchHistory();
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ════════════════════════════════════════════════════════════════════
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check status on load
+            checkStatus();
+
+            // Render search history
+            renderSearchHistory();
+
+            // Enter key to search (with Shift+Enter for new line)
+            document.getElementById('query-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    searchLLMs();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -16,7 +16,8 @@
 <br/>
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Flask](https://img.shields.io/badge/Flask-API_Backend-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
 [![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-black?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.com)
 [![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
 [![uv](https://img.shields.io/badge/uv-Package_Manager-7c3aed?style=for-the-badge)](https://github.com/astral-sh/uv)
@@ -97,27 +98,31 @@ It runs entirely on your machine — **zero cloud API costs, zero data leaks.**
   User Query
       │
       ▼
-┌─────────────┐     ┌──────────────────────┐
-│  Streamlit  │────▶│   agent_core.py      │
-│   app.py    │     │                      │
-└─────────────┘     │  1. DDGS Web Search  │──▶ DuckDuckGo
-      │             │  2. Build context    │        │
-      │             │  3. Call Ollama      │◀───────┘
-      │             │     (OpenAI SDK)     │
-      │             │  4. Parse JSON       │
-      │             └──────────────────────┘
-      │                        │
-      │             ┌──────────▼───────────┐
-      │             │  ollama_utils.py     │
-      │             │                      │
-      │             │  • List local models │──▶ Ollama API
-      │             │  • Score for workflow│        │
-      │             │  • Test model output │◀───────┘
-      │             └──────────────────────┘
-      │
-      ▼
-  Structured Results
-  (Model Cards + Table + Local Models)
+┌──────────────────┐   REST/JSON   ┌──────────────────────┐
+│  HTML/CSS/JS     │──────────────▶│   api.py (Flask)     │
+│  Bootstrap 5     │               │                      │
+│  frontend/       │◀──────────────│  POST /api/recommend │
+│  index.html      │               │  GET  /api/local-models
+└──────────────────┘               │  POST /api/test-model│
+                                   │  GET  /api/status    │
+                                   └──────────┬───────────┘
+                                              │
+                              ┌───────────────▼───────────────┐
+                              │        agent_core.py          │
+                              │                               │
+                              │  1. DDGS Web Search ──▶ DuckDuckGo
+                              │  2. Build context   ◀──────────┘
+                              │  3. Call Ollama                │
+                              │     (OpenAI SDK)  ──▶ Ollama  │
+                              │  4. Parse JSON    ◀───────────┘
+                              └───────────────┬───────────────┘
+                                              │
+                              ┌───────────────▼───────────────┐
+                              │       ollama_utils.py         │
+                              │  • List local models ──▶ Ollama API
+                              │  • Score for workflow          │
+                              │  • Test model output ◀────────┘
+                              └───────────────────────────────┘
 ```
 
 **Key design decision:** The OpenAI Python SDK is used to talk to Ollama's OpenAI-compatible endpoint (`http://localhost:11434/v1`). This means you get the clean OpenAI SDK interface without needing an OpenAI API key — just point `base_url` at Ollama.
@@ -129,13 +134,15 @@ It runs entirely on your machine — **zero cloud API costs, zero data leaks.**
 ```
 agentlens/
 │
-├── app.py              # 🖥️  Streamlit web interface — all UI components
-├── agent_core.py       # 🧠  Core engine: DDGS search + Ollama inference + JSON parsing
-├── ollama_utils.py     # 🏠  Local Ollama model utilities: list, score, test
-├── config.py           # ⚙️  All settings, constants, and environment loading
-├── .env                # 🔐  Local config (Ollama URL + model name)
-├── .env.example        # 📋  Safe-to-commit example env file
-└── requirements.txt    # 📦  Python dependencies
+├── frontend/
+│   └── index.html          # 🖥️  Full UI — HTML, CSS, Bootstrap 5, vanilla JS
+├── api.py                  # 🌐  Flask REST API — bridges frontend ↔ backend
+├── agent_core.py           # 🧠  Core engine: DDGS search + Ollama inference + JSON parsing
+├── ollama_utils.py         # 🏠  Local Ollama model utilities: list, score, test
+├── config.py               # ⚙️  All settings, constants, and environment loading
+├── .env                    # 🔐  Local config (Ollama URL + model name) — gitignored
+├── .env.example            # 📋  Safe-to-commit example env file
+└── requirements.txt        # 📦  Python dependencies
 ```
 
 ---
@@ -182,7 +189,7 @@ source .venv/bin/activate        # Linux / macOS
 ### 3. Install all dependencies
 
 ```bash
-uv add openai ollama streamlit python-dotenv pandas duckduckgo-search
+uv add openai ollama flask flask-cors python-dotenv pandas duckduckgo-search
 ```
 
 Or restore from `requirements.txt`:
@@ -230,10 +237,10 @@ ollama serve
 ### Step 2 — Launch AgentLens
 
 ```bash
-streamlit run app.py
+python api.py
 ```
 
-The app will open automatically at `http://localhost:8501`.
+The app will open at `http://localhost:5000`.
 
 ---
 
@@ -320,7 +327,9 @@ Each recommended model is displayed with the following structured fields:
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| **UI** | [Streamlit](https://streamlit.io) | Web interface |
+| **Frontend** | [HTML / CSS / Bootstrap 5](https://getbootstrap.com) | Responsive web UI — no framework, no build step |
+| **JavaScript** | Vanilla JS (`fetch` / `async-await`) | API calls, dynamic rendering, session history |
+| **API Layer** | [Flask](https://flask.palletsprojects.com) + [Flask-CORS](https://flask-cors.readthedocs.io) | REST API bridging frontend and Python backend |
 | **LLM Client** | [OpenAI Python SDK](https://github.com/openai/openai-python) | Calls Ollama's OpenAI-compatible endpoint |
 | **Local Inference** | [Ollama](https://ollama.com) | Runs LLMs locally |
 | **Reasoning Model** | `qwen3.5:cloud` | Analyses web results & generates recommendations |
@@ -354,8 +363,13 @@ cd agentlens
 uv venv && source .venv/bin/activate
 uv pip install -r requirements.txt
 
+# Create a feature branch
+git checkout -b feature/your-feature-name
 
----
+# Make your changes, then open a Pull Request
+```
+
+Please follow [PEP 8](https://pep8.org/) for Python code style and keep commits focused and descriptive.
 
 <div align="center">
 
